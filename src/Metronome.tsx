@@ -19,9 +19,25 @@ class Metronome extends React.Component<MetronomeProps, MetronomeState> {
     }
 
     handleBpmChange(event: React.ChangeEvent<HTMLInputElement>) {
-        this.setState({
-            bpm: +event.target.value
-        });
+
+        const bpm = event.target.value;
+
+        if(this.state.playing) {
+            // Stop the old timer and start a new one
+            global.clearInterval(this.state.timer!);
+
+            const ms: number = (60 / +bpm) * 1000;
+
+            // Set the new BPM, and reset the beat counter
+            this.setState({
+                timer: global.setInterval(() => this.playClick(), ms),
+                count: 0,
+                bpm: +bpm
+            });
+        } else {
+            // Otherwise just update the BPM
+            this.setState({ bpm: +bpm });
+        }
     }
 
     startStop(_ = '') {
@@ -46,9 +62,8 @@ class Metronome extends React.Component<MetronomeProps, MetronomeState> {
         }
     }
 
-    playClick(_ = '') {
+    playClick() {
         const { count, beatsPerMeasure } = this.state;
-
 
         // The first beat will have a different sound than the others
         if (count % beatsPerMeasure === 0) {
