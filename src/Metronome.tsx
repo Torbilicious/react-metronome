@@ -6,12 +6,8 @@ const click2 = require('./resources/click2.wav');
 
 class Metronome extends React.Component<MetronomeProps, MetronomeState> {
 
-    self: Metronome;
-
     constructor(props: MetronomeProps) {
         super(props);
-
-        this.self = this;
 
         this.state = {
             playing: false,
@@ -30,6 +26,43 @@ class Metronome extends React.Component<MetronomeProps, MetronomeState> {
 
     startStop(_ = '') {
         this.state.sounds.click1.play();
+
+        if (this.state.playing) {
+            // Stop the timer
+            global.clearInterval(this.state.timer!);
+            this.setState({
+                playing: false
+            });
+        } else {
+            // Start a timer with the current BPM
+            const ms: number = (60 / this.state.bpm) * 1000;
+
+            this.setState({
+                timer: global.setInterval(() => this.playClick(), ms),
+                count: 0,
+                playing: true
+                // Play a click "immediately" (after setState finishes)
+            },            this.playClick);
+        }
+    }
+
+    playClick(_ = '') {
+        const { count, beatsPerMeasure } = this.state;
+
+
+        // The first beat will have a different sound than the others
+        if (count % beatsPerMeasure === 0) {
+            this.state.sounds.click2.play();
+            console.log("Tick!");
+        } else {
+            this.state.sounds.click1.play();
+            console.log("Tock!");
+        }
+
+        // Keep track of which beat we're on
+        this.setState(state => ({
+            count: (state.count + 1) % state.beatsPerMeasure
+        }));
     }
 
     render() {
@@ -71,6 +104,7 @@ interface MetronomeState {
     bpm: number;
     beatsPerMeasure: number;
     sounds: Sounds;
+    timer?: NodeJS.Timer;
 }
 
 interface MetronomeProps {
